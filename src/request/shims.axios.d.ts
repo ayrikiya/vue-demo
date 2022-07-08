@@ -2,7 +2,7 @@
  * @Author: 王荣
  * @Date: 2022-07-08 10:08:19
  * @LastEditors: 王荣
- * @LastEditTime: 2022-07-08 10:16:14
+ * @LastEditTime: 2022-07-08 14:26:48
  * @Description: 填写简介
  */
 /*
@@ -13,7 +13,7 @@
  * @Description: 填写简介
  */
 
-import axios, { AxiosInstance, AxiosRequestConfig as IAxiosRequestConfig, AxiosResponse } from "axios";
+import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 
 
 declare module 'axios'{
