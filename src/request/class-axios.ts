@@ -2,7 +2,7 @@
  * @Author: 王荣
  * @Date: 2022-06-08 17:05:41
  * @LastEditors: 王荣
- * @LastEditTime: 2022-07-08 10:20:03
+ * @LastEditTime: 2022-07-08 13:56:09
  * @Description: 类写法创建自定义axios
  */
 // export {}
@@ -23,18 +23,6 @@ interface BaseResponseData<T> {
   message?: string;
 }
 
-// 基本 Ajax 格式
-// interface ICustomAxios {
-//   create: (config: AxiosRequestConfig) => ICustomAxios;
-//   get: <T>(url: string, config?: AxiosRequestConfig) => Promise<T>;
-//   delete: <T>(url: string, config?: AxiosRequestConfig) => Promise<T>;
-//   head: <T>(url: string, config?: AxiosRequestConfig) => Promise<T>;
-//   options: <T>(url: string, config?: AxiosRequestConfig) => Promise<T>;
-//   post: <T>(url: string, data?: any, config?: AxiosRequestConfig) => Promise<T>;
-//   put: <T>(url: string, data?: any, config?: AxiosRequestConfig) => Promise<T>;
-//   patch: <T>(url: string, data?: any, config?: AxiosRequestConfig) => Promise<T>;
-// }
-
 class CustomAxios {
   // create: (config?: AxiosRequestConfig) => CustomAxios;
 
@@ -54,7 +42,7 @@ class CustomAxios {
   }
 
   create = (config?: AxiosRequestConfig) => {
-    return new CustomAxios();
+    return new CustomAxios(config);
   };
 
   getInstance(config?: AxiosRequestConfig): AxiosInstance {
