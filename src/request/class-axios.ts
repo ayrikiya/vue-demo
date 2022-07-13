@@ -2,7 +2,7 @@
  * @Author: 王荣
  * @Date: 2022-06-08 17:05:41
  * @LastEditors: 王荣
- * @LastEditTime: 2022-07-08 13:56:09
+ * @LastEditTime: 2022-07-12 16:17:15
  * @Description: 类写法创建自定义axios
  */
 // export {}
@@ -17,7 +17,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 // } from "src/util/message/message";
 
 // 基本返回数据格式 (response.data的类型)
-interface BaseResponseData<T> {
+interface BaseResponseData<T = any> {
   code: number;
   data: T;
   message?: string;
@@ -25,18 +25,12 @@ interface BaseResponseData<T> {
 
 class CustomAxios {
   // create: (config?: AxiosRequestConfig) => CustomAxios;
-
   instance: AxiosInstance;
+  // 默认设置的拦截器 
+  // 不需要的话可以后续通过this.instance.interceptors.request.eject(id)取消掉
   defaultInterceptors: { requestId?: any; responseId?: any };
-  // defaults: AxiosRequestConfig
-
+  timer: number;
   constructor(instanceConfig?: AxiosRequestConfig) {
-    // this.defaults = instanceConfig;
-
-    // this.interceptors = {
-    //   request: new InterceptorManager(),
-    //   response: new InterceptorManager()
-    // };
     this.defaultInterceptors = {};
     this.instance = this.getInstance(instanceConfig);
   }
@@ -61,39 +55,69 @@ class CustomAxios {
       (config: AxiosRequestConfig) => {
         // 通过vuex管理全局弹窗状态 初看起来有点小题大作，但弹窗的状态放在哪个组件中都不合适，即使放在根组件，如果子组件有修改弹窗状态的需求，父子传值也一点不优雅。
         // store.commit('setLoading', true)
-        // store.commit('setError', {status : false, message : ''})
+        // store.commit('setError', {status : true, message : error})
         // mesLoading("加载中", "search_mes");
+        // mesSuccess("加载完成", "search_mes");
+        // mesError(data?.message || "请求失败", "search_mes");
+        
+        // 自定义的一些数据 需要config作为载体由请求转发到响应处理 
         // 拦截器计算响应时间
-        config.metadata = {
-          startTime: Number(new Date()),
-          endTime: Number(new Date()),
+        // loading定时器
+        config.customData = {
+          startTime: +new Date(),
+          loadingTimer: setTimeout(() => {
+            console.log('*******加载loading')
+          }, 200),
         };
+        
 
         return config;
       }
     );
 
+    // 响应拦截
     this.defaultInterceptors.responseId = instance.interceptors.response.use(
-      (response: AxiosResponse) => {
+      (response: AxiosResponse<BaseResponseData>) => {
         // 2xx范围内状态码触发成功处理
         let { data, status, statusText, headers, config, request } = response;
 
-        setTimeout(() => {
-          // store.commit('setLoading', false)
-          // console.log("1dfafsdgsdfgas");
-          // mesSuccess("加载完成", "search_mes");
-        }, 500);
-
         // 拦截器计算响应时间
-        config.metadata = {
-          startTime: config.metadata?.startTime as number,
-          endTime: Number(new Date()),
+        config.customData = {
+          ...config.customData,
+          endTime: +new Date(),
+          // 响应时间 毫秒
+          resDuration: +new Date() - (config.customData.startTime as number),
         };
-        // 响应时间 毫秒
-        const resDuration = config.metadata.endTime - config.metadata.startTime;
-        console.log("响应时间", resDuration);
+        console.log('响应时间', config.customData.resDuration)
+        // loading是否取消定时
+        if(config.customData.resDuration as number < 200){
+          // 如果计算响应时间小于设定定时 说明响应很快 不需要loading
+          console.log('取消loading定时')
+          clearTimeout(config.customData.loadingTimer)
+        }else{
+          // 如果响应时间大于设定定时 loading已经加载了一段时间 现在有响应 取消掉loading
+          console.log('取消加载loading')
+        }
 
-        return response;
+        //根据前后端约定进行一些是否正确返回的判断
+        if (status === 200 && data.code === 0) {
+          // 弹出加载成功信息
+          // store.commit('setSuccess', true)
+          // mesSuccess("加载完成", "search_mes");
+          return response;
+        } else {
+          console.log("成功但不是200", response);
+          // 这里是后端约定的错误处理，会在response.data里处理
+          // 例如： response.data = {data: '', code: 1, message: '查询参数类型错误'}
+
+          // 弹出加载警告信息
+          // store.commit('setWarning', true)
+          // mesWarning(response.data.message, "search_mes");
+          return Promise.reject(response);
+
+        }
+
+        // return response;
       },
       (err) => {
         // 超出2xx状态码触发错误处理
@@ -101,28 +125,28 @@ class CustomAxios {
         const { response } = err;
         const { data, status, statusText, headers, config, request } = response;
 
-        // console.log("err", err);
-        // console.log("err response", response);
-
         // 拦截器计算响应时间
-        config.metadata.endTime = Number(new Date());
-        // 响应时间 毫秒
-        const resDuration = config.metadata.endTime - config.metadata.startTime;
-        console.log("响应时间", resDuration);
-
-        // const { error } = err.response.data
-        // store.commit('setError', {status : true, message : error})
-        // store.commit('setLoading', false)
-        // return Promise.reject(err.response.data)
-        setTimeout(() => {
-          // store.commit('setLoading', false)
-          // console.log("1dfafsdgsdfgas");
-          // mesError(err?.message || "请求失败", "search_mes");
-        }, 500);
+        config.customData = {
+          ...config.customData,
+          endTime: +new Date(),
+          // 响应时间 毫秒
+          resDuration: +new Date() - (config.customData.startTime as number),
+        };
+        // loading是否取消定时
+        if(config.customData.resDuration as number < 40){
+          // 如果计算响应时间小于40ms 说明响应很快 不需要loading
+          console.log('取消loading定时显示')
+        }else{
+          // 如果响应时间大于40ms loading已经加载了一段时间 现在有响应 取消掉loading
+          console.log('取消加载loading')
+        }
+        
+        // 这里是非后端约定的错误处理，可能是服务器错误等，会在response.data里处理
+        // 这里response.data可能直接就是错误提示 response.data = '服务器错误404'
 
         // 这里必须是返回一个reject的promise， 这样才会走axios.request在then函数中的catch
         // 如果是return err; 也会then当作成功处理。
-        return Promise.reject(err);
+        return Promise.reject(response);
       }
     );
 
@@ -134,18 +158,19 @@ class CustomAxios {
       this.instance.request<BaseResponseData<T>>(config).then(
         (response) => {
           let { data, status, statusText, headers, config, request } = response;
-
-          if (status === 200 && data.code === 0) {
-            resolve(data.data);
-          } else {
-            setTimeout(() => {
-              // store.commit('setLoading', false)
-              // console.log("1dfafsdgsdfgas");
-              // mesError(data?.message || "请求失败", "search_mes");
-            }, 500);
-            console.log("成功但不是200", response);
-            reject(data);
-          }
+        
+          // if (status === 200 && data.code === 0) {
+          //   resolve(data.data);
+          // } else {
+          //   // setTimeout(() => {
+          //     // store.commit('setLoading', false)
+          //     // console.log("1dfafsdgsdfgas");
+          //     // mesError(data?.message || "请求失败", "search_mes");
+          //   // }, 500);
+          //   console.log("成功但不是200", response);
+          //   reject(data);
+          // }
+          resolve(data.data)
         },
         (err) => {
           reject(err);

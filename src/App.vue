@@ -2,53 +2,24 @@
  * @Author: 王荣
  * @Date: 2022-05-31 15:40:57
  * @LastEditors: 王荣
- * @LastEditTime: 2022-06-06 16:14:38
+ * @LastEditTime: 2022-07-09 22:36:43
  * @Description: 填写简介
 -->
 <script setup>
 // This starter template is using Vue 3 <script setup> SFCs
 // Check out https://vuejs.org/api/sfc-script-setup.html#script-setup
-import HelloWorld from './components/HelloWorld.vue'
-// import axios from './request/axios';
-import axios from 'axios';
-const request = axios.create({
-  // baseURL: 'http://localhost:7002/request'
-})
-
-// request.interceptors.response.use(response => {
-//   // 2xx范围内状态码
-//   setTimeout(() => {
-//     // store.commit('setLoading', false)
-//   }, 1000)
-//   return response;
-// }, err => {
-//   // 超出2xx状态码触发错误处理
-//   // 在error中要取到后端返回信息，必须要取err.response。被包装了一层。
-//   const { response } = err;
-//   const { data, status, statusText, headers, config, request } = response;
-//   console.log('err', err)
-//   console.log('err response', response)
-//   return err;
-//   // const { error } = err.response.data
-//   // store.commit('setError', {status : true, message : error})
-//   // store.commit('setLoading', false)
-//   // return Promise.reject(err.response.data)
-
-// })
-
-console.log('//app请求前')
-request.get('didi')
-console.log('//app请求后')
+import custom_axios from './request/class-axios'
+import Top from './pages/top.vue'
 console.log('app')
-
-// axios.defaults.baseURL = 'http://localhost:7999/api/';
-axios.get('dodo')
+custom_axios.get('http://md.summeres.site/note/%E6%88%AA%E5%B1%8F2021-03-12%20%E4%B8%8B%E5%8D%8812.37.36.png').catch((err)=>{
+  console.log('apperr')
+})
 
 </script>
 
 <template>
-  <img alt="Vue logo" src="./assets/logo.png" />
-  <HelloWorld msg="Hello Vue 3 + Vite" />
+  APP
+  <Top></Top>
 </template>
 
 <style>
